@@ -42,6 +42,18 @@ function Carbon:GetPlayer(Name: string)
 		})
 end
 
+function Carbon:IsStudio()
+	return RunService:IsStudio()
+end
+
+function Carbon:GetEnv()
+	if RunService:IsServer() then
+		return "Server"
+	elseif RunService:IsClient() then
+		return "Client"
+	end
+end
+
 function Carbon:RegisterModule(Module: table | ModuleScript)
 	assert(
 		type(Module) == "table" or Module:IsA("ModuleScript"),
@@ -71,10 +83,10 @@ end
 function Carbon:Start()
 	Log:Log("Starting Carbon", Log.InfoType.Debug)
 
-	-- Module Start
+	-- Module Load
 	for _, Module in pairs(self.Modules) do
-		if Module["Start"] then
-			Module:Start()
+		if Module["Load"] then
+			Module:Load()
 		end
 	end
 
