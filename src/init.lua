@@ -68,9 +68,10 @@ function Carbon:RegisterModule(Module: table | ModuleScript)
 		table.insert(self.Modules, Module)
 	else
 		local Key = Module.Name
-		assert(self.Modules[Key], "The module already exists.")
+		assert(self.Modules[Key] == nil, "The module already exists.")
+		Module = require(Module)
 
-		self.Modules[Key] = require(Module)
+		self.Modules[Key] = Module
 	end
 
 	if Module["Update"] then
