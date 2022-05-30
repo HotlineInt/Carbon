@@ -10,6 +10,7 @@ local Carbon = {
 	Network = script:WaitForChild("Network"),
 	Util = script:WaitForChild("Util"),
 	Vendor = script:WaitForChild("Vendor"),
+	UI = script:WaitForChild("UI"),
 	Player = Player or Emulators.Player.new({
 		Name = "BloxyTek",
 		DisplayName = "Cutie",
