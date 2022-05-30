@@ -22,6 +22,7 @@ local Carbon = {
 	}),
 	Modules = {},
 	Pools = {
+		CharacterAdded = {},
 		RenderUpdate = {},
 	},
 }
@@ -84,11 +85,26 @@ end
 function Carbon:Start()
 	Log:Log("Starting Carbon", Log.InfoType.Debug)
 
+	Player.CharacterAdded:Connect(function(Character)
+		for _, Module in pairs(self.Pools.CharacterAdded) do
+			Module:OnCharacterAdded(Character)
+		end
+	end)
+	local ModulesLoaded = 0
+
 	-- Module Load
 	for _, Module in pairs(self.Modules) do
-		if Module["Load"] then
-			Module:Load()
-		end
+		task.spawn(function()
+			if Module["Load"] then
+				Module:Load()
+			end
+			if Module["OnCharacterAdded"] then
+				-- insert into characteradded pool
+				table.insert(self.Pools.CharacterAdded, Module)
+			end
+
+			ModulesLoaded += 1
+		end)
 	end
 
 	RunService.RenderStepped:Connect(function(DeltaTime: number)
@@ -97,6 +113,7 @@ function Carbon:Start()
 		end
 	end)
 
+	Log:Log(string.format("Loaded %d modules", ModulesLoaded), Log.InfoType.Debug)
 	Log:Log("Finished starting Carbon", Log.InfoType.Debug)
 end
 
