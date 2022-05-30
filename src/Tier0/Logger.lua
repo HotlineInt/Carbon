@@ -11,20 +11,19 @@ local Logger = { InfoType = {
 	Exception = "EXCEPTION",
 } }
 
-function Logger:Log(Message: any, Type: InfoType)
-	if not Type then
-		Type = self.InfoType.Info
+function Logger:Log(Message: any, Context: InfoType)
+	if not Context then
+		Context = self.InfoType.Info
 	end
 	local Time = os.date("%H:%M:%S")
-	local Value = self.InfoType[Type]
 
-	local FinalMessage = "[" .. tostring(Time) .. "] " .. "[" .. Value .. "] " .. Message
+	local FinalMessage = "[" .. tostring(Time) .. "] " .. "[" .. Context .. "] " .. Message
 
-	if Type == self.InfoType.Info then
+	if Context == self.InfoType.Info then
 		print(FinalMessage)
-	elseif Type == self.InfoType.Warning or Type == self.InfoType.Debug then
+	elseif Context == self.InfoType.Warning or Context == self.InfoType.Debug then
 		warn(FinalMessage)
-	elseif Type == self.InfoType.Exception then
+	elseif Context == self.InfoType.Exception then
 		error(FinalMessage)
 	end
 end
