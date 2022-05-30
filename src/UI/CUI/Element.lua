@@ -29,10 +29,6 @@ end
 function Element:SetProperty(Name: string, Value: any)
 	--	print(self.Instance:GetFullName())
 	self.Instance[Name] = Value
-
-	if self.Instance[Name] == Value then
-		print("Set property", Name, "to", Value)
-	end
 end
 
 function Element:GetProperty(Name: string, Value: any)
@@ -137,6 +133,10 @@ end
 
 function Element:Get(Name: string | Instance)
 	for _, Child in pairs(self.Children) do
+		-- try to fix a bug where we SOMEHOW got garbage from other elements.
+		if not Child.Instance:FindFirstAncestor(self.Instance.Name) then
+			continue
+		end
 		if Child.Instance.Name == Name then
 			return Child
 		elseif Child.Instance == Name then
@@ -172,7 +172,6 @@ end
 function Element:On(EventName, Callback)
 	local Event = self.Instance[EventName]
 	local us = self
-	--	print(EventName, Event)
 
 	if typeof(Event) == "RBXScriptSignal" then
 		local connection = Event:Connect(function(...)
@@ -203,6 +202,10 @@ function Element:FireEvent(Name, ...)
 end
 
 function Element:Mount(Parent: Instance)
+	if Parent == nil then
+		warn("Warning: Setting parent to nil.")
+	end
+
 	if type(Parent) == "table" and Parent["Instance"] then
 		self.Instance.Parent = Parent.Instance
 	else -- instance
