@@ -12,8 +12,12 @@ local Logger = { InfoType = {
 } }
 
 function Logger:Log(Message: any, Type: InfoType)
+	if not Type then
+		Type = self.InfoType.Info
+	end
 	local Time = os.date("%H:%M:%S")
 	local Value = self.InfoType[Type]
+
 	local FinalMessage = "[" .. tostring(Time) .. "] " .. "[" .. Value .. "] " .. Message
 
 	if Type == self.InfoType.Info then
