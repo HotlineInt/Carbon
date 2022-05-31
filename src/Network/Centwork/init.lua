@@ -14,7 +14,7 @@ local Network = {
 	Events = {},
 }
 
-function Network:CreateEvent(Name: string, Type: EventType)
+function Network:CreateEvent(Name: string, Type: {})
 	local Event = Instance.new(Type, EventFolder)
 	Event.Name = Name
 	local Class = EventClass.new(Event)

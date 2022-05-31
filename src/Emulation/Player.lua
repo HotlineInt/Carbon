@@ -8,7 +8,7 @@ local Player = {
 }
 Player.__index = Player
 
-function Player.new(Props: table)
+function Player.new(Props: {})
 	return setmetatable(Props, Player)
 end
 

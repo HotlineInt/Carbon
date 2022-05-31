@@ -134,7 +134,7 @@ end
 function Element:Get(Name: string | Instance)
 	for _, Child in pairs(self.Children) do
 		-- try to fix a bug where we SOMEHOW got garbage from other elements.
-		if not Child.Instance:FindFirstAncestor(self.Instance.Name) then
+		if not Child.Instance:IsDescendantOf(self.Instance) then
 			continue
 		end
 		if Child.Instance.Name == Name then
