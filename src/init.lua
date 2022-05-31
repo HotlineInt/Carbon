@@ -55,7 +55,7 @@ function Carbon:GetEnv(): "Server" | "Client"
 	end
 end
 
-function Carbon:RegisterModule(Module: table | ModuleScript): nil
+function Carbon:RegisterModule(Module: {} | ModuleScript): nil
 	assert(
 		type(Module) == "table" or Module:IsA("ModuleScript"),
 		"The provided module must be a Table or ModuleScript."
