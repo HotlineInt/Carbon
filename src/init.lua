@@ -95,12 +95,13 @@ function Carbon:Start()
 	-- Module Load
 	for _, Module in pairs(self.Modules) do
 		task.spawn(function()
-			if Module["Load"] then
-				Module:Load()
-			end
 			if Module["OnCharacterAdded"] then
 				-- insert into characteradded pool
 				table.insert(self.Pools.CharacterAdded, Module)
+			end
+
+			if Module["Load"] then
+				Module:Load()
 			end
 
 			ModulesLoaded += 1
