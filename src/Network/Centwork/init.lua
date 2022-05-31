@@ -1,5 +1,6 @@
 -- Centwork.lua - contact@shiroko.me - 2022/05/30
 -- Description: Carbon Network System (Centwork)
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local EventFolder = ReplicatedStorage:FindFirstChild("Events")
 if not EventFolder then
@@ -23,9 +24,9 @@ function Network:CreateEvent(Name: string, Type: EventType)
 end
 
 function Network:GetEvent(Name: string)
-	for _, Event in pairs(self.Events) do
+	for _, Event in pairs(EventFolder:GetChildren()) do
 		if Event.Name == Name then
-			return Event
+			return EventClass.new(Event)
 		end
 	end
 end
