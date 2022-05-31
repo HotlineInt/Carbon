@@ -27,7 +27,7 @@ local Carbon = {
 	},
 }
 
-function Carbon:GetPlayer(Name: string)
+function Carbon:GetPlayer(Name: string): Player
 	if Name == nil then
 		return Player
 	end
@@ -43,11 +43,11 @@ function Carbon:GetPlayer(Name: string)
 		})
 end
 
-function Carbon:IsStudio()
+function Carbon:IsStudio(): boolean
 	return RunService:IsStudio()
 end
 
-function Carbon:GetEnv()
+function Carbon:GetEnv(): "Server" | "Client"
 	if RunService:IsServer() then
 		return "Server"
 	elseif RunService:IsClient() then
@@ -55,7 +55,7 @@ function Carbon:GetEnv()
 	end
 end
 
-function Carbon:RegisterModule(Module: table | ModuleScript)
+function Carbon:RegisterModule(Module: table | ModuleScript): nil
 	assert(
 		type(Module) == "table" or Module:IsA("ModuleScript"),
 		"The provided module must be a Table or ModuleScript."
@@ -82,7 +82,7 @@ function Carbon:RegisterModule(Module: table | ModuleScript)
 	end
 end
 
-function Carbon:Start()
+function Carbon:Start(): nil
 	Log:Log("Starting Carbon", Log.InfoType.Debug)
 
 	Player.CharacterAdded:Connect(function(Character)
