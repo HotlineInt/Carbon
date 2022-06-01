@@ -36,7 +36,6 @@ function Element:GetProperty(Name: string, Value: any)
 end
 
 function Element:_applyproperties(Element, Properties)
-	local self = Element
 	local OnEventSub = 7
 	local OnChangeSub = 8
 
@@ -49,23 +48,23 @@ function Element:_applyproperties(Element, Properties)
 					Component.Parent = self.Instance
 					continue
 				elseif Component["Is_Element"] then
-					self:Add(Component)
+					Element:Add(Component)
 				elseif not Component["ClassName"] then
-					self:Add(Type, Component)
+					Element:Add(Type, Component)
 					-- this lets us properly handle pre-made components in children table
 				else
-					self:Add(Component["ClassName"], Component)
+					Element:Add(Component["ClassName"], Component)
 				end
 			end
 			-- Event
 		elseif type(i) == "string" and i:sub(1, OnEventSub) == "OnEvent" then
 			local EventName = string.gsub(i, "OnEvent", "")
-			self:On(EventName, v)
+			Element:On(EventName, v)
 			-- Cryptic spaghetti
 		elseif type(i) == "string" and i:sub(1, OnChangeSub) == "OnChange" then
 			local Property = string.gsub(i, "OnChange", "")
-			self.Instance:GetPropertyChangedSignal(Property):Connect(function()
-				local NewValue = self:GetProperty(Property)
+			Element.Instance:GetPropertyChangedSignal(Property):Connect(function()
+				local NewValue = Element:GetProperty(Property)
 				v(Element, NewValue)
 			end)
 		else -- normal properties
@@ -104,7 +103,7 @@ function Element:Add(Type, Properties: table, RobloxNative: table)
 		-- RobloxNative is used to set Roblox-Native properties rather than pass thru Props to components.
 		-- ! This used to crash the entirety of CUI by passing thru new_element.Instance instead of just the table.
 		-- ! end me.
-		self:_applyproperties(new_element, RobloxNative)
+		Element:_applyproperties(new_element, RobloxNative)
 	elseif type(Type) == "string" then
 		new_element = Element.new(Type, Properties)
 	elseif type(Type) == "table" then
@@ -114,7 +113,7 @@ function Element:Add(Type, Properties: table, RobloxNative: table)
 		else
 			new_element = Type
 		end
-		self:_applyproperties(new_element, Properties)
+		Element:_applyproperties(new_element, Properties)
 	end
 
 	if new_element == nil then
@@ -180,6 +179,7 @@ function Element:On(EventName, Callback)
 		table.insert(self.Connections, {
 			connection = connection,
 			name = EventName,
+			Host = self.Instance,
 			callback = Callback,
 		})
 
@@ -216,20 +216,17 @@ end
 -- Cleansup and locks the element to prevent errors.
 function Element:Destroy()
 	for _, connection in pairs(self.Connections) do
-		connection.connection:Disconnect()
+		if connection.Host == self.Instance then
+			connection.connection:Disconnect()
+		end
 	end
-
 	for _, Tween in pairs(self.Tweens) do
 		Tween:Destroy()
 	end
-
 	self.Properties = nil
 	self.Type = nil
-
 	self.Instance:Destroy()
-	self.Instance = nil
 	self.Children = nil
-	self = nil
 end
 
 function Element:AnimateTween(Info: Tween, Properties: table)
