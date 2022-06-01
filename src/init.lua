@@ -8,6 +8,7 @@ local Emulators = {
 }
 local Log = require(script.Tier0.Logger)
 local Carbon = {
+	Framework = script:WaitForChild("Framework"),
 	Tier0 = script:WaitForChild("Tier0"),
 	Emulation = script:WaitForChild("Emulation"),
 	Network = script:WaitForChild("Network"),
