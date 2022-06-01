@@ -4,7 +4,7 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
 local Emulators = {
-	Player = require(script.Emulation.Player),
+	Player = require(script:WaitForChild("Emulation").Player),
 }
 local Log = require(script.Tier0.Logger)
 local Carbon = {
