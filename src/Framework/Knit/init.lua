@@ -1,7 +1,7 @@
 -- init.lua - 2022/03/28
 -- Purpose: Carbon-Knit bridge
 
-local Knit = require(script.Knit:WaitForChild("Knit"))
+local Knit = require(script:WaitForChild("Knit"):WaitForChild("Knit"))
 local KnitBridge = { Util = Knit.Util }
 
 function KnitBridge:CreateService(...)
@@ -17,7 +17,7 @@ function KnitBridge:GetService(Name)
 end
 
 function KnitBridge:Start(Settings)
-	return Knit.Start({ ServicePromises = false })
+	return Knit.Start()
 end
 
 function KnitBridge:CreateSignal(Name: string)
