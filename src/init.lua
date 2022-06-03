@@ -6,7 +6,7 @@ local Player = Players.LocalPlayer
 local Emulators = {
 	Player = require(script:WaitForChild("Emulation").Player),
 }
-local Log = require(script.Tier0.Logger)
+local Log = require(script:WaitForChild("Tier0"):WaitForChild("Logger"))
 local Carbon = {
 	Framework = script:WaitForChild("Framework"),
 	Tier0 = script:WaitForChild("Tier0"),
