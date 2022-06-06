@@ -1,0 +1,3 @@
+[submodule "src/Data/ProfileService"]
+	path = src/Data/ProfileService
+	url = https://github.com/MadStudioRoblox/ProfileService

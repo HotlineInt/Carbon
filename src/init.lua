@@ -13,6 +13,7 @@ local Carbon = {
 	Emulation = script:WaitForChild("Emulation"),
 	Network = script:WaitForChild("Network"),
 	Util = script:WaitForChild("Util"),
+	Data = script:WaitForChild("Data"),
 	Vendor = script:WaitForChild("Vendor"),
 	UI = script:WaitForChild("UI"),
 	Player = Player or Emulators.Player.new({
