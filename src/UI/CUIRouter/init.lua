@@ -44,6 +44,16 @@ function Router:SetContent(View: {})
 	self.CurrentView = View
 end
 
+function Router:GenerateRoutesFromFolder(Folder: Folder): {}
+	local Routes = {}
+
+	for _, Route in pairs(Folder:GetChildren()) do
+		Routes["/" .. string.lower(Route.Name)] = require(Route)
+	end
+
+	return Routes
+end
+
 -- Goes to a route. Displays an error page if theres none.
 function Router:GoTo(Route: string, Props: {}): {} | {}
 	if self.CurrentView then
