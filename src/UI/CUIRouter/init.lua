@@ -5,6 +5,7 @@ local Router = {
 	History = {},
 }
 
+local MergeTable = require(script.Parent.Parent.Util.MergeTable)
 local Signal = require(script.Parent.Parent.Util.Signal)
 Router.__index = Router
 local ErrorPage = require(script.ErrorPage)
@@ -49,6 +50,10 @@ function Router:GoTo(Route: string, Props: {}): {} | {}
 		self.CurrentView:Destroy()
 	end
 
+	if not Props then
+		Props = {}
+	end
+
 	local View = self:ResolveRoute(Route)
 	local ElementView
 
@@ -57,7 +62,7 @@ function Router:GoTo(Route: string, Props: {}): {} | {}
 		self:SetContent(View)
 		ElementView = View
 	else
-		ElementView = self:SetContent(View.View(Props))
+		ElementView = self:SetContent(View.View(MergeTable({ Router = self }, Props)))
 	end
 
 	self.OnRoute:Fire(View, ElementView)
