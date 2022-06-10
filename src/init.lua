@@ -89,7 +89,9 @@ function Carbon:Start(): nil
 
 	Player.CharacterAdded:Connect(function(Character)
 		for _, Module in pairs(self.Pools.CharacterAdded) do
-			Module:OnCharacterAdded(Character)
+			task.spawn(function()
+				Module:OnCharacterAdded(Character)
+			end)
 		end
 	end)
 	local ModulesLoaded = 0
