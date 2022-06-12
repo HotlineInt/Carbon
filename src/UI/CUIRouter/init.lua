@@ -40,6 +40,8 @@ function Router:ResolveRoute(Route: string): {}
 end
 
 function Router:SetContent(View: {})
+	-- Borders dont make sense here.
+	View:SetProperty("BorderSizePixel", 0)
 	View:Mount(self.Viewer)
 	self.CurrentView = View
 end
@@ -48,7 +50,10 @@ function Router:GenerateRoutesFromFolder(Folder: Folder): {}
 	local Routes = {}
 
 	for _, Route in pairs(Folder:GetChildren()) do
-		Routes["/" .. string.lower(Route.Name)] = require(Route)
+		Routes["/" .. string.lower(Route.Name)] = {
+			Title = Route.Name,
+			View = require(Route),
+		}
 	end
 
 	return Routes
@@ -77,6 +82,15 @@ function Router:GoTo(Route: string, Props: {}): {} | {}
 
 	self.OnRoute:Fire(View, ElementView)
 	return View, ElementView
+end
+
+function Router:GetRoutes()
+	local Routes = self.Routes
+
+	-- We dont want that garbage here!
+	Routes["BUILTIN_ERROR_PAGE"] = nil
+
+	return Routes
 end
 
 function Router:GoBack() end
