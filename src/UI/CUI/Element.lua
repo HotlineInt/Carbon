@@ -1,7 +1,15 @@
 local Spring = require(script.Parent.Spring)
 local TweenService = game:GetService("TweenService")
 
-local Element = { Type = "Unknown", Properties = {}, Connections = {}, Tweens = {}, Children = {}, Is_Element = true }
+local Element = {
+	Type = "Unknown",
+	Properties = {},
+	Connections = {},
+	Tweens = {},
+	Children = {},
+	Is_Element = true,
+	Parent = nil,
+}
 Element.__index = Element
 
 local BadProperties = require(script.Parent.BadProperties)
@@ -121,7 +129,7 @@ function Element:Add(Type, Properties: table, RobloxNative: table)
 	end
 
 	table.insert(self.Children, new_element)
-	new_element:Mount(self.Instance)
+	new_element:Mount(self)
 
 	return new_element
 end
@@ -211,6 +219,7 @@ function Element:Mount(Parent: Instance)
 	else -- instance
 		self.Instance.Parent = Parent
 	end
+	self.Parent = Parent
 end
 
 -- Cleansup and locks the element to prevent errors.
