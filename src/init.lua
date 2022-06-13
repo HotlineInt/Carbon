@@ -26,6 +26,7 @@ local Carbon = {
 	Pools = {
 		CharacterAdded = {},
 		RenderUpdate = {},
+		TickUpdate = {},
 	},
 }
 
@@ -82,26 +83,37 @@ function Carbon:RegisterModule(Module: {} | ModuleScript): nil
 			Module:Update(Delta)
 		end)
 	end
+
+	if Module["Tick"] then
+		table.insert(self.Pools.TickUpdate, function(Delta: number)
+			Module:Tick(Delta)
+		end)
+	end
 end
 
 function Carbon:Start(): nil
+	local Env = self:GetEnv()
 	Log:Log("Starting Carbon", Log.InfoType.Debug)
 
-	Player.CharacterAdded:Connect(function(Character)
-		for _, Module in pairs(self.Pools.CharacterAdded) do
-			task.spawn(function()
-				Module:OnCharacterAdded(Character)
-			end)
-		end
-	end)
+	if Env == "Client" then
+		Player.CharacterAdded:Connect(function(Character)
+			for _, Module in pairs(self.Pools.CharacterAdded) do
+				task.spawn(function()
+					Module:OnCharacterAdded(Character)
+				end)
+			end
+		end)
+	end
 	local ModulesLoaded = 0
 
 	-- Module Load
 	for _, Module in pairs(self.Modules) do
 		task.spawn(function()
-			if Module["OnCharacterAdded"] then
-				-- insert into characteradded pool
-				table.insert(self.Pools.CharacterAdded, Module)
+			if Env == "Client" then
+				if Module["OnCharacterAdded"] then
+					-- insert into characteradded pool
+					table.insert(self.Pools.CharacterAdded, Module)
+				end
 			end
 
 			if Module["Load"] then
@@ -112,11 +124,19 @@ function Carbon:Start(): nil
 		end)
 	end
 
-	RunService.RenderStepped:Connect(function(DeltaTime: number)
-		for _, Update in pairs(self.Pools.RenderUpdate) do
-			Update(DeltaTime)
-		end
-	end)
+	if Env == "Client" then
+		RunService.RenderStepped:Connect(function(DeltaTime: number)
+			for _, Update in pairs(self.Pools.RenderUpdate) do
+				Update(DeltaTime)
+			end
+		end)
+	else
+		RunService.Heartbeat:Connect(function(deltaTime)
+			for _, Update in pairs(self.Pools.TickUpdate) do
+				Update(deltaTime)
+			end
+		end)
+	end
 
 	Log:Log(string.format("Loaded %d modules", ModulesLoaded), Log.InfoType.Debug)
 	Log:Log("Finished starting Carbon", Log.InfoType.Debug)
