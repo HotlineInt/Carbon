@@ -14,9 +14,11 @@ local Network = {
 	Events = {},
 }
 
-function Network:CreateEvent(Name: string, Type: {})
-	local Event = Instance.new(Type, EventFolder)
+function Network:CreateEvent(Name: string, Type: string)
+	local Event = Instance.new(Type)
 	Event.Name = Name
+	Event.Parent = EventFolder
+
 	local Class = EventClass.new(Event)
 	table.insert(self.Events, Class)
 

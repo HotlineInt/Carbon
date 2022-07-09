@@ -1,3 +1,6 @@
 [submodule "src/Data/ProfileService"]
 	path = src/Data/ProfileService
 	url = https://github.com/MadStudioRoblox/ProfileService
+[submodule "src/Vendor/raycastHitboxRbxl"]
+	path = src/Vendor/raycastHitboxRbxl
+	url = https://github.com/Swordphin/raycastHitboxRbxl

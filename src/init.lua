@@ -27,6 +27,7 @@ local Carbon = {
 		CharacterAdded = {},
 		RenderUpdate = {},
 		TickUpdate = {},
+		UIUpdate = {},
 	},
 }
 
@@ -128,6 +129,12 @@ function Carbon:Start(): nil
 		RunService.RenderStepped:Connect(function(DeltaTime: number)
 			for _, Update in pairs(self.Pools.RenderUpdate) do
 				Update(DeltaTime)
+			end
+		end)
+
+		RunService.Heartbeat:Connect(function(DeltaTime: number)
+			for _, Updater in pairs(self.Pools.UIUpdate) do
+				Updater(DeltaTime)
 			end
 		end)
 	else

@@ -68,7 +68,6 @@ function Element:_applyproperties(Element, Properties)
 		elseif type(i) == "string" and i:sub(1, OnEventSub) == "OnEvent" then
 			local EventName = string.gsub(i, "OnEvent", "")
 			Element:On(EventName, v)
-			-- Cryptic spaghetti
 		elseif type(i) == "string" and i:sub(1, OnChangeSub) == "OnChange" then
 			local Property = string.gsub(i, "OnChange", "")
 			Element.Instance:GetPropertyChangedSignal(Property):Connect(function()
@@ -83,10 +82,6 @@ function Element:_applyproperties(Element, Properties)
 			local Success, Fail = pcall(function()
 				self.Instance[i] = v
 			end)
-
-			if not Success then
-				--warn("[CUI] Applying property to", self, "failed:", Fail, "This is not fatal.")
-			end
 		end
 	end
 end
