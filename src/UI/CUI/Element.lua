@@ -7,6 +7,7 @@ local Element = {
 	Connections = {},
 	Tweens = {},
 	Children = {},
+	StateUpdate = {},
 	Is_Element = true,
 	Parent = nil,
 }
@@ -49,7 +50,6 @@ function Element:_applyproperties(Element, Properties)
 
 	for i, v in pairs(Properties) do
 		if i == Keys.Children then -- fusion/roact like children structure
-			-- add every component here
 			for Type, Component in pairs(v) do
 				-- normal roblox instances (for viewportframes)
 				if Component:IsA("Instance") then
@@ -68,6 +68,31 @@ function Element:_applyproperties(Element, Properties)
 		elseif type(i) == "string" and i:sub(1, OnEventSub) == "OnEvent" then
 			local EventName = string.gsub(i, "OnEvent", "")
 			Element:On(EventName, v)
+		elseif type(v) == "table" and v["Type"] == "CUI_STATE" then
+			local Callback = v.Callback
+			local PropertyName = i
+
+			local CurrentValue = v.State:Get()
+			local Result = Callback(Element, CurrentValue)
+			if not Result then
+				warn("Initial state update empty")
+			end
+
+			Element:SetProperty(PropertyName, Result)
+
+			local StateConnection = v.Signal:Connect(function(NewValue: any)
+				local Result = Callback(Element, NewValue)
+				if not Result then
+					warn("State update returned nothing")
+				end
+
+				Element:SetProperty(PropertyName, Result)
+			end)
+
+			table.insert(Element.StateUpdate, {
+				State = v,
+				Connection = StateConnection,
+			})
 		elseif type(i) == "string" and i:sub(1, OnChangeSub) == "OnChange" then
 			local Property = string.gsub(i, "OnChange", "")
 			Element.Instance:GetPropertyChangedSignal(Property):Connect(function()
@@ -229,6 +254,11 @@ function Element:Destroy()
 	end
 	self.Properties = nil
 	self.Type = nil
+	for Index, StateUpdater in pairs(self.StateUpdate) do
+		StateUpdater.Connection:Disconnect()
+		self.StateUpdate[Index] = nil
+	end
+
 	self.Instance:Destroy()
 	self.Children = nil
 end
