@@ -36,6 +36,12 @@ function CUI:RequiredProp(Prop: any, ExpectedValue: any)
 	return Prop ~= ExpectedValue
 end
 
+function CUI:ComputeCondition(Condition, Callback, ...)
+	if Condition then
+		return Callback(...)
+	end
+end
+
 function CUI:MarkAsScalable(Viewport: table)
 	local UIScale = Viewport:Add("UIScale", { Name = "GlobalUIScale" }, {})
 	CollectionService:AddTag(UIScale.Instance, "ScalableUI")
