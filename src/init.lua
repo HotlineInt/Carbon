@@ -6,6 +6,7 @@ local Player = Players.LocalPlayer
 local Emulators = {
 	Player = require(script:WaitForChild("Emulation").Player),
 }
+local ModuleLoader = require(script.ModuleLoader)
 local Log = require(script:WaitForChild("Tier0"):WaitForChild("Logger"))
 local Carbon = {
 	Framework = script:WaitForChild("Framework"),
@@ -16,17 +17,23 @@ local Carbon = {
 	Data = script:WaitForChild("Data"),
 	Vendor = script:WaitForChild("Vendor"),
 	UI = script:WaitForChild("UI"),
-	Player = Player or Emulators.Player.new({
-		Name = "BloxyTek",
-		DisplayName = "Cutie",
-		UserId = 21450341,
-		AccountAge = 18,
-	}),
+	Player = Player
+		-- emulate the player here for server access
+		-- ! DO NOT USE EMULATORS IN PRODUCTION !
+		or Emulators.Player.new({
+			Name = "BloxyTek",
+			DisplayName = "Cutie",
+			UserId = 21450341,
+			AccountAge = 18,
+		}),
+	Instance = script,
 	Modules = {},
 	Pools = {
 		CharacterAdded = {},
 		RenderUpdate = {},
 		TickUpdate = {},
+
+		-- UNUSED: Reserved for CUI UI Updates
 		UIUpdate = {},
 	},
 }
@@ -40,10 +47,10 @@ function Carbon:GetPlayer(Name: string): Player
 	return FoundPlayer
 		or Player
 		or Emulators.Player.new({
-			Name = "BloxyTek",
-			DisplayName = "Cutie",
-			UserId = 21450341,
-			AccountAge = 500,
+			Name = "ROBLOX",
+			DisplayName = "c_unload_pl",
+			UserId = 1,
+			AccountAge = 16,
 		})
 end
 
@@ -110,6 +117,7 @@ function Carbon:Start(): nil
 	-- Module Load
 	for _, Module in pairs(self.Modules) do
 		task.spawn(function()
+			ModuleLoader(self, Module)
 			if Env == "Client" then
 				if Module["OnCharacterAdded"] then
 					-- insert into characteradded pool
