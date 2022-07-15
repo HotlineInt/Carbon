@@ -1,8 +1,10 @@
 local Spring = require(script.Parent.Spring)
+local Promise = require(script.Parent.Parent.Parent.Util.Promise)
 local TweenService = game:GetService("TweenService")
 
 local Element = {
 	Type = "Unknown",
+	ClassName = "Element",
 	Properties = {},
 	Connections = {},
 	Tweens = {},
@@ -21,7 +23,7 @@ function Element.new(Type: string, Properties: table)
 	self.Instance = Instance.new(Type)
 
 	if self.Properties then
-		self:_applyproperties(self, self.Properties)
+		Element:_applyproperties(self, Properties)
 	end
 
 	return self
@@ -31,31 +33,43 @@ function Element:IsA(ClassName: string)
 	return self.Instance.ClassName == ClassName
 end
 
-function Element:CallRobloxInternal(Method: string, ...)
-	return self.Instance[Method](...)
+-- Calls an inner Roblox Method.
+--[[
+
+	```
+		for _,Child in pairs(Element:CallRobloxMethod("GetChildren")) do
+			print(Child) -- Output: SomeChildName
+		end
+	```
+]]
+function Element:CallRobloxMethod(Method: string, ...)
+	return self.Instance[Method](self.Instance, ...)
 end
 
+-- Sets a property with the given Value
 function Element:SetProperty(Name: string, Value: any)
 	--	print(self.Instance:GetFullName())
 	self.Instance[Name] = Value
 end
 
+-- Gets a value of a property.
 function Element:GetProperty(Name: string, Value: any)
 	return self.Instance[Name]
 end
 
+-- Internal method to apply properties (and children) to an Element
 function Element:_applyproperties(Element, Properties)
 	local OnEventSub = 7
 	local OnChangeSub = 8
 
-	for i, v in pairs(Properties) do
-		if i == Keys.Children then -- fusion/roact like children structure
-			for Type, Component in pairs(v) do
+	for Name, Value in pairs(Properties) do
+		if Name == Keys.Children then -- fusion/roact like children structure
+			for Type, Component in pairs(Value) do
 				-- normal roblox instances (for viewportframes)
 				if Component:IsA("Instance") then
 					Component.Parent = self.Instance
 					continue
-				elseif Component["Is_Element"] then
+				elseif Component["Is_Element"] or Component.ClassName == "cui_component" then
 					Element:Add(Component)
 				elseif not Component["ClassName"] then
 					Element:Add(Type, Component)
@@ -65,14 +79,14 @@ function Element:_applyproperties(Element, Properties)
 				end
 			end
 			-- Event
-		elseif type(i) == "string" and i:sub(1, OnEventSub) == "OnEvent" then
-			local EventName = string.gsub(i, "OnEvent", "")
-			Element:On(EventName, v)
-		elseif type(v) == "table" and v["Type"] == "CUI_STATE" then
-			local Callback = v.Callback
-			local PropertyName = i
+		elseif type(Name) == "string" and Name:sub(1, OnEventSub) == "OnEvent" then
+			local EventName = string.gsub(Name, "OnEvent", "")
+			Element:On(EventName, Value)
+		elseif type(Value) == "table" and Value.Type == "CUI_STATE" then
+			local Callback = Value.Callback
+			local PropertyName = Name
 
-			local CurrentValue = v.State:Get()
+			local CurrentValue = Value.State:Get()
 			local Result = Callback(Element, CurrentValue)
 			if not Result then
 				warn("Initial state update empty")
@@ -80,7 +94,7 @@ function Element:_applyproperties(Element, Properties)
 
 			Element:SetProperty(PropertyName, Result)
 
-			local StateConnection = v.Signal:Connect(function(NewValue: any)
+			local StateConnection = Value.Signal:Connect(function(NewValue: any)
 				local Result = Callback(Element, NewValue)
 				if not Result then
 					warn("State update returned nothing")
@@ -90,27 +104,29 @@ function Element:_applyproperties(Element, Properties)
 			end)
 
 			table.insert(Element.StateUpdate, {
-				State = v,
+				State = Value,
+				TargetElement = Element,
 				Connection = StateConnection,
 			})
-		elseif type(i) == "string" and i:sub(1, OnChangeSub) == "OnChange" then
-			local Property = string.gsub(i, "OnChange", "")
+		elseif type(Name) == "string" and Name:sub(1, OnChangeSub) == "OnChange" then
+			local Property = string.gsub(Name, "OnChange", "")
 			Element.Instance:GetPropertyChangedSignal(Property):Connect(function()
 				local NewValue = Element:GetProperty(Property)
-				v(Element, NewValue)
+				Value(Element, NewValue)
 			end)
 		else -- normal properties
 			-- We don't want to assign bad properties and clutter up the output:
-			if table.find(BadProperties, i) then
+			if table.find(BadProperties, Name) then
 				continue
 			end
 			local Success, Fail = pcall(function()
-				self.Instance[i] = v
+				Element.Instance[Name] = Value
 			end)
 		end
 	end
 end
 
+-- Adds a Element with the given properties to ```self```
 function Element:Add(Type, Properties: table, RobloxNative: table)
 	local new_element
 
@@ -134,18 +150,16 @@ function Element:Add(Type, Properties: table, RobloxNative: table)
 		Element:_applyproperties(new_element, RobloxNative)
 	elseif type(Type) == "string" then
 		new_element = Element.new(Type, Properties)
-	elseif type(Type) == "table" then
+	elseif Type.ClassName == "Element" then
 		-- Certain edge-case where we want to add a already created component.
-		if Type["Render"] then
-			new_element = Type:Render()
-		else
-			new_element = Type
-		end
+		new_element = Type
 		Element:_applyproperties(new_element, Properties)
+	elseif Type.ClassName == "cui_component" then
+		Type.UI:Mount(self)
 	end
 
 	if new_element == nil then
-		error("CUI has experienced an internal exception: Given element has failed to create.")
+		error("CUI has experienced an internal error: Given element has failed to create.")
 	end
 
 	table.insert(self.Children, new_element)
@@ -231,7 +245,7 @@ end
 
 function Element:Mount(Parent: Instance)
 	if Parent == nil then
-		warn("Warning: Setting parent to nil.")
+		warn("Warning: Setting parent to nil.", debug.traceback())
 	end
 
 	if type(Parent) == "table" and Parent["Instance"] then
@@ -239,6 +253,16 @@ function Element:Mount(Parent: Instance)
 	else -- instance
 		self.Instance.Parent = Parent
 	end
+
+	-- This is probably a very janky way of doing this, but it works.
+	if self.Component then
+		if not Parent then
+			self.Component:OnUnmount()
+		else
+			self.Component:OnMount()
+		end
+	end
+
 	self.Parent = Parent
 end
 
@@ -255,20 +279,41 @@ function Element:Destroy()
 	self.Properties = nil
 	self.Type = nil
 	for Index, StateUpdater in pairs(self.StateUpdate) do
-		StateUpdater.Connection:Disconnect()
-		self.StateUpdate[Index] = nil
+		print("IsTarget: ", StateUpdater.TargetElement == self)
+		if StateUpdater.TargetElement == self then
+			print("Still disconnecting \n Target:", StateUpdater.TargetElement, "self:", self)
+			StateUpdater.Connection:Disconnect()
+			self.StateUpdate[Index] = nil
+		end
 	end
 
 	self.Instance:Destroy()
 	self.Children = nil
+
+	table.freeze(self)
+end
+
+function Element:AnimateTweenPromise(Info: Tween, Properties: table)
+	return Promise.new(function(resolve, reject, onCancel)
+		local tween = TweenService:Create(self.Instance, Info, Properties)
+
+		-- No idea what this even means
+		if onCancel(function()
+			tween:Cancel()
+		end) then
+			return
+		end
+
+		-- :AnimateTween() is meant to be called once
+		tween.Completed:Once(resolve)
+		tween:Play()
+	end)
 end
 
 function Element:AnimateTween(Info: Tween, Properties: table)
 	local Tween = TweenService:Create(self.Instance, Info, Properties)
 	Tween:Play()
 	table.insert(self.Tweens, Tween)
-
-	return Tween
 end
 
 function Element:AnimateSpring(DRatio, Frequency, Properties)
