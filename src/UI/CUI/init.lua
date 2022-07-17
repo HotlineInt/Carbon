@@ -8,16 +8,37 @@ local CUI = {
 	Children = Keys.Children,
 	OnEvent = Keys.OnEvent,
 	OnChange = Keys.OnChange,
+	OnMount = Keys.OnMount,
+	OnUnmount = Keys.OnUnmount,
+	BeforeMount = Keys.BeforeMount,
+	BeforeUnmount = Keys.BeforeUnmount,
 	Props = Keys.Props,
 }
 
+export type Element = {
+	Type: string,
+	ClassName: string,
+	Properties: table,
+	Connections: table,
+	Tweens: table,
+	Children: table,
+	StateUpdate: table,
+	Changed: RBXScriptSignal,
+	Is_Element: boolean,
+	Parent: Element,
+}
+
 -- Creates a brand new CUI element.
-function CUI:CreateElement(Type, Properties)
+function CUI:CreateElement(Type, Properties): Element
 	assert(type(Type) == "string", "Type must be a valid string")
 	assert(type(Properties) == "table", "Properties must be a valid table")
 
-	local Viewport = Element.new(Type, Properties)
+	if type(Type) == "table" and Type.ClassName == "cui_component" then
+		local Element = Type:Create(Properties)
+		return Element
+	end
 
+	local Viewport = Element.new(Type, Properties)
 	return Viewport
 end
 
@@ -36,7 +57,7 @@ function CUI:RequiredProp(Prop: any, ExpectedValue: any)
 	return Prop ~= ExpectedValue
 end
 
-function CUI:ComputeCondition(Condition, Callback, ...)
+function CUI:ComputeCondition(Condition, Callback, ...): ()
 	if Condition then
 		return Callback(...)
 	end
@@ -58,15 +79,17 @@ end
 function CUI:SetGlobalScale(ScaleMultiplier: number)
 	for _, Scale: UIScale in pairs(CollectionService:GetTagged("ScalableUI")) do
 		-- basic optimization; we dont want to scale UI that isnt even enabled.
-		if not Scale.Parent.Enabled then
-			return
-		end
+
+		-- nvm this is dumb lol
+		-- if not Scale.Parent.Enabled then
+		-- 	return
+		-- end
 
 		Scale.Scale = ScaleMultiplier
 	end
 end
 
-function CUI:ConvertExisting(GUIObject: GuiObject)
+function CUI:ConvertExisting(GUIObject: GuiObject): Element
 	local function AddAndCreate(Object: GuiObject)
 		local object = CUI:CreateElement(GUIObject.ClassName, {})
 		object.Instance:Destroy()
