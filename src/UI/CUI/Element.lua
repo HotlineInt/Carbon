@@ -1,4 +1,5 @@
 local Spring = require(script.Parent.Spring)
+local Signal = require(script.Parent.Signal)
 local Promise = require(script.Parent.Parent.Parent.Util.Promise)
 local TweenService = game:GetService("TweenService")
 
@@ -10,6 +11,7 @@ local Element = {
 	Tweens = {},
 	Children = {},
 	StateUpdate = {},
+	Changed = Signal.new(),
 	Is_Element = true,
 	Parent = nil,
 }
@@ -19,7 +21,14 @@ local BadProperties = require(script.Parent.BadProperties)
 local Keys = require(script.Parent.Keys)
 
 function Element.new(Type: string, Properties: table)
-	local self = setmetatable({ Type = Type, Properties = Properties }, Element)
+	local self = setmetatable({}, Element)
+
+	-- self.Connections = {}
+	-- self.Tweens = {}
+	-- self.Children = {}
+	-- self.StateUpdate = {}
+	self.Type = Type
+	self.Properties = Properties
 	self.Instance = Instance.new(Type)
 
 	if self.Properties then
@@ -50,6 +59,7 @@ end
 function Element:SetProperty(Name: string, Value: any)
 	--	print(self.Instance:GetFullName())
 	self.Instance[Name] = Value
+	self.Changed:Fire(Name, Value)
 end
 
 -- Gets a value of a property.
@@ -65,18 +75,19 @@ function Element:_applyproperties(Element, Properties)
 	for Name, Value in pairs(Properties) do
 		if Name == Keys.Children then -- fusion/roact like children structure
 			for Type, Component in pairs(Value) do
-				-- normal roblox instances (for viewportframes)
-				if Component:IsA("Instance") then
-					Component.Parent = self.Instance
-					continue
-				elseif Component["Is_Element"] or Component.ClassName == "cui_component" then
-					Element:Add(Component)
-				elseif not Component["ClassName"] then
-					Element:Add(Type, Component)
+				task.spawn(function()
+					-- normal roblox instances (for viewportframes)
+					if Component:IsA("Instance") then
+						Component.Parent = self.Instance
+					elseif Component["Is_Element"] or Component.ClassName == "cui_component" then
+						Element:Add(Component)
+					elseif not Component["ClassName"] then
+						Element:Add(Type, Component)
 					-- this lets us properly handle pre-made components in children table
-				else
-					Element:Add(Component["ClassName"], Component)
-				end
+					else
+						Element:Add(Component["ClassName"], Component)
+					end
+				end)
 			end
 			-- Event
 		elseif type(Name) == "string" and Name:sub(1, OnEventSub) == "OnEvent" then
@@ -114,6 +125,16 @@ function Element:_applyproperties(Element, Properties)
 				local NewValue = Element:GetProperty(Property)
 				Value(Element, NewValue)
 			end)
+		elseif type(Name) == "string" and Name == Keys.OnMount then
+			Element.OnMount = Value
+		elseif type(Name) == "string" and Name == Keys.OnUnmount then
+			Element.OnUnmount = Value
+		elseif type(Name) == "string" and Name == Keys.BeforeMount then
+			Element.BeforeMount = Value
+		elseif type(Name) == "string" and Name == Keys.BeforeUnmount then
+			Element.BeforeUnmount = Value
+		elseif type(Name) == "string" and Name == Keys.OnUpdate then
+			-- TODO: add to carbon UI update pool
 		else -- normal properties
 			-- We don't want to assign bad properties and clutter up the output:
 			if table.find(BadProperties, Name) then
@@ -126,6 +147,18 @@ function Element:_applyproperties(Element, Properties)
 	end
 end
 
+-- Called right after an element is mounted
+function Element:OnMount(self, Parent: {}) end
+
+-- Called right before an element is unmounted
+function Element:OnUnmount(self, Parent: {}) end
+
+-- Called right before an element is munted
+function Element:BeforeMount(self) end
+
+-- Called rigt before an element is unmounted
+function Element:BeforeUnmount(self) end
+
 -- Adds a Element with the given properties to ```self```
 function Element:Add(Type, Properties: table, RobloxNative: table)
 	local new_element
@@ -137,25 +170,31 @@ function Element:Add(Type, Properties: table, RobloxNative: table)
 
 	-- more and more edge cases... my head is getting dizzy..
 	if type(Type) == "function" then
-		new_element = Type(Properties)
+		warn("Function-elements are deprecated and will result in a not a valid member call soon.")
+		return
+		-- new_element = Type(Properties)
 
-		-- fallback
-		if RobloxNative == nil then
-			RobloxNative = Properties
-		end
+		-- -- fallback
+		-- if RobloxNative == nil then
+		-- 	RobloxNative = Properties
+		-- end
 
-		-- RobloxNative is used to set Roblox-Native properties rather than pass thru Props to components.
-		-- ! This used to crash the entirety of CUI by passing thru new_element.Instance instead of just the table.
-		-- ! end me.
-		Element:_applyproperties(new_element, RobloxNative)
+		-- -- RobloxNative is used to set Roblox-Native properties rather than pass thru Props to components.
+		-- -- ! This used to crash the entirety of CUI by passing thru new_element.Instance instead of just the table.
+		-- -- ! end me.
+		-- Element:_applyproperties(new_element, RobloxNative)
 	elseif type(Type) == "string" then
-		new_element = Element.new(Type, Properties)
+		warn("String-elements are deprecated and will result in a not a valid member call soon.")
+		return
+		--	new_element = Element.new(Type, Properties)
 	elseif Type.ClassName == "Element" then
 		-- Certain edge-case where we want to add a already created component.
 		new_element = Type
-		Element:_applyproperties(new_element, Properties)
+		-- Pretty sure this is a wasted call.
+		--	Element:_applyproperties(new_element, Properties)
 	elseif Type.ClassName == "cui_component" then
-		Type.UI:Mount(self)
+		Type:InternalRender()
+		Type:GetGUI():Mount(self)
 	end
 
 	if new_element == nil then
@@ -254,16 +293,17 @@ function Element:Mount(Parent: Instance)
 		self.Instance.Parent = Parent
 	end
 
-	-- This is probably a very janky way of doing this, but it works.
-	if self.Component then
-		if not Parent then
-			self.Component:OnUnmount()
-		else
-			self.Component:OnMount()
-		end
+	if Parent then
+		print("Mounting")
+		self:OnMount(self, Parent)
 	end
 
 	self.Parent = Parent
+end
+
+function Element:Unmount()
+	self:OnUnmount(self)
+	self.Parent = nil
 end
 
 -- Cleansup and locks the element to prevent errors.
@@ -273,6 +313,7 @@ function Element:Destroy()
 			connection.connection:Disconnect()
 		end
 	end
+	self:OnUnmount()
 	for _, Tween in pairs(self.Tweens) do
 		Tween:Destroy()
 	end
