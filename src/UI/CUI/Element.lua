@@ -293,12 +293,14 @@ function Element:Mount(Parent: Instance)
 		self.Instance.Parent = Parent
 	end
 
+	self.Parent = Parent
+
 	if Parent then
 		print("Mounting")
 		self:OnMount(self, Parent)
 	end
 
-	self.Parent = Parent
+	
 end
 
 function Element:Unmount()
