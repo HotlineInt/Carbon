@@ -9,6 +9,16 @@ return {
 	OnChange = function(Name)
 		return "OnChange" .. Name
 	end,
+	-- Called when the Element is mounted
+	OnMount = "OnMount",
+	-- Called when the Element is unmounted
+	OnUnmount = "UnMountEvent",
+
+	-- Called before the Element is mounted
+	BeforeMount = "BeforeMount",
+
+	-- Called before the Element is unmounted
+	BeforeUnmount = "BeforeUnMount",
 	State = function(DefaultValue)
 		return "State" .. DefaultValue
 	end,
