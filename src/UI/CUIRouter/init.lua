@@ -80,7 +80,7 @@ function Router:GoTo(Route: string, Props: {}): {} | {}
 		ElementView = self:SetContent(View.View(MergeTable({ Router = self }, Props)))
 	end
 
-	self.OnRoute:Fire(View, ElementView)
+	self.OnRoute:Fire(Route, View, ElementView)
 	return View, ElementView
 end
 
