@@ -11,6 +11,8 @@ local CUI = {
 	OnMount = Keys.OnMount,
 	OnUnmount = Keys.OnUnmount,
 	BeforeMount = Keys.BeforeMount,
+	Scaleable = Keys.Scaleable,
+	Custom = Keys.Custom,
 	BeforeUnmount = Keys.BeforeUnmount,
 	Props = Keys.Props,
 }
@@ -68,7 +70,7 @@ function CUI:MarkAsScalable(Viewport: table)
 	CollectionService:AddTag(UIScale.Instance, "ScalableUI")
 end
 
-function CUI:UnmarkAsScalable(Viewport: table)
+function CUI:UnmarkAsScalable(Viewport: {})
 	local GlobalScaleElement = Viewport:Get("GlobalUIScale")
 
 	if GlobalScaleElement then

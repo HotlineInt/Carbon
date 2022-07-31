@@ -6,19 +6,23 @@ return {
 	OnEvent = function(Name)
 		return "OnEvent" .. Name
 	end,
+	Scaleable = "Scaleable",
 	OnChange = function(Name)
 		return "OnChange" .. Name
 	end,
 	-- Called when the Element is mounted
 	OnMount = "OnMount",
 	-- Called when the Element is unmounted
-	OnUnmount = "UnMountEvent",
+	OnUnmount = "OnUnmount",
 
 	-- Called before the Element is mounted
 	BeforeMount = "BeforeMount",
+	Custom = function(FuncName: string)
+		return "Custom" .. FuncName
+	end,
 
 	-- Called before the Element is unmounted
-	BeforeUnmount = "BeforeUnMount",
+	BeforeUnmount = "BeforeUnmount",
 	State = function(DefaultValue)
 		return "State" .. DefaultValue
 	end,

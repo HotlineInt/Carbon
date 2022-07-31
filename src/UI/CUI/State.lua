@@ -18,6 +18,7 @@ end
 function State:Listen(Callback: (any))
 	return {
 		State = self,
+		ClassName = "CUI_STATE",
 		Type = "CUI_STATE",
 		Callback = Callback,
 		Signal = self._LISTEN_SIGNAL,

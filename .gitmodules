@@ -4,3 +4,6 @@
 [submodule "src/Vendor/raycastHitboxRbxl"]
 	path = src/Vendor/raycastHitboxRbxl
 	url = https://github.com/Swordphin/raycastHitboxRbxl
+[submodule "src/State/Rodux"]
+	path = src/State/Rodux
+	url = https://github.com/Roblox/rodux
