@@ -7,3 +7,6 @@
 [submodule "src/State/Rodux"]
 	path = src/State/Rodux
 	url = https://github.com/Roblox/rodux
+[submodule "src/Vendor/ZonePlus"]
+	path = src/Vendor/ZonePlus
+	url = https://github.com/1ForeverHD/ZonePlus

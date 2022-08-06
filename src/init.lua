@@ -17,6 +17,7 @@ local Carbon = {
 	Data = script:WaitForChild("Data"),
 	Vendor = script:WaitForChild("Vendor"),
 	UI = script:WaitForChild("UI"),
+	EntitySystem = script:WaitForChild("EntitySystem"),
 	Player = Player
 		-- emulate the player here for server access
 		-- ! DO NOT USE EMULATORS IN PRODUCTION !
