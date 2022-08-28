@@ -48,6 +48,21 @@ function Sound:__init(Instance: Instance)
 		pissoff()
 	end
 
+	for EName, IName in pairs(LocalizedProps) do
+		self.Sound:GetPropertyChangedSignal(IName):Connect(function()
+			-- change the property in self.Properties
+			self:SetProperty(EName, self.Sound[IName])
+		end)
+	end
+
+	self.Sound.Stopped:Connect(function()
+		self:SetProperty("Playing", false)
+	end)
+
+	self.Sound.Ended:Connect(function()
+		self:SetProperty("Playing", false)
+	end)
+
 	self:GetProperty("Sound"):Listen(function(Sound)
 		if not Sound:find("rbxassetid://") then
 			Sound = "rbxassetid://%s" .. tostring(Sound)
