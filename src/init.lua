@@ -9,7 +9,10 @@ local Emulators = {
 local ModuleLoader = require(script.ModuleLoader)
 local Log = require(script:WaitForChild("Tier0"):WaitForChild("Logger"))
 local Carbon = {
-	Framework = script:WaitForChild("Framework"),
+	-- backwards compatibility:
+	Framework = script:WaitForChild("Interop"),
+	-- but you should be using this instead of Framework
+	Interop = script:WaitForChild("Interop"),
 	Tier0 = script:WaitForChild("Tier0"),
 	Emulation = script:WaitForChild("Emulation"),
 	Network = script:WaitForChild("Network"),
@@ -18,14 +21,15 @@ local Carbon = {
 	Vendor = script:WaitForChild("Vendor"),
 	UI = script:WaitForChild("UI"),
 	EntitySystem = script:WaitForChild("EntitySystem"),
+	AudioSystem = script:WaitForChild("AudioSystem"),
 	Player = Player
 		-- emulate the player here for server access
 		-- ! DO NOT USE EMULATORS IN PRODUCTION !
 		or Emulators.Player.new({
-			Name = "BloxyTek",
-			DisplayName = "Cutie",
-			UserId = 21450341,
-			AccountAge = 18,
+			Name = "UNKNOWN+DN",
+			DisplayName = "Unknown",
+			UserId = 1,
+			AccountAge = 999999999999,
 		}),
 	Instance = script,
 	Modules = {},
@@ -84,7 +88,9 @@ function Carbon:RegisterModule(Module: {} | ModuleScript): nil
 		assert(self.Modules[Key] == nil, "The module already exists.")
 		Module = require(Module)
 
-		self.Modules[Key] = Module
+		-- FIXME: find a way to make this work &
+		--self.Modules[Key] = Module
+		table.insert(self.Modules, Module)
 	end
 
 	if Module["Update"] then
@@ -100,7 +106,15 @@ function Carbon:RegisterModule(Module: {} | ModuleScript): nil
 	end
 end
 
-function Carbon:Start(): nil
+function Carbon:RegisterFromFolder(Folder: Folder, Recursive: boolean)
+	local Modules = if Recursive then Folder:GetDescendants() else Folder:GetChildren()
+
+	for _, Module in pairs(Modules) do
+		self:RegisterModule(Module)
+	end
+end
+
+function Carbon:Start(WaitForModuleLoad: boolean): nil
 	local Env = self:GetEnv()
 	Log:Log("Starting Carbon", Log.InfoType.Debug)
 
@@ -117,7 +131,7 @@ function Carbon:Start(): nil
 
 	-- Module Load
 	for _, Module in pairs(self.Modules) do
-		task.spawn(function()
+		local function LoadModule()
 			ModuleLoader(self, Module)
 			if Env == "Client" then
 				if Module["OnCharacterAdded"] then
@@ -131,7 +145,13 @@ function Carbon:Start(): nil
 			end
 
 			ModulesLoaded += 1
-		end)
+		end
+
+		if WaitForModuleLoad then
+			LoadModule()
+		else
+			task.spawn(LoadModule)
+		end
 	end
 
 	if Env == "Client" then
